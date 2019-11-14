@@ -1,29 +1,48 @@
+import java.util.Queue;
+import java.util.LinkedList;
 import java.util.IdentityHashMap;
 import java.lang.reflect.*;
 import org.jdom.*;
 
 public class Serializer {
 	private IdentityHashMap<Object, String> map = new IdentityHashMap<Object, String>();
-	
+	private Queue<Object> list = new LinkedList<Object>();
 	private Element root = new Element("serialized");
 	private Document document = new Document(root);
 	
 	private void setMap(Object obj)
 	{
-		map.put(obj, Integer.toString(map.size()));
+		if(!map.containsKey(obj))
+		{
+			map.put(obj, Integer.toString(map.size()));
+		}
 	}
 	
 	private String getMap(Object obj)
 	{
+		if(!map.containsKey(obj))
+		{
+			return "-1";
+		}
 		return map.get(obj);
 	}
 	
 	public Document serialize(Object obj) throws IllegalArgumentException, IllegalAccessException
 	{
-		Class c = obj.getClass();
+		list.add(obj);
+		while(!list.isEmpty())
+		{
+			root.addContent(serializeObject(list.poll()));
+		}
+		return document;
+	}
+	
+	private Element serializeObject(Object obj) throws IllegalArgumentException, IllegalAccessException
+	{
 		setMap(obj);
+		Class c = obj.getClass();
 		
-		Element e = new Element("Object");
+		Element e = new Element("object");
 		e.setAttribute(new Attribute("class", c.getName()));
 		e.setAttribute(new Attribute("id", getMap(obj)));
 		
@@ -32,24 +51,29 @@ public class Serializer {
 		{
 			field[i].setAccessible(true);
 			
-			Element f = new Element("Field");
+			Element f = new Element("field");
 			f.setAttribute(new Attribute("name", field[i].getName()));
 			f.setAttribute(new Attribute("declaringclass", field[i].getType().getName()));
 			
 			if(field[i].getType().isPrimitive())
 			{
-				Element value = new Element("Value");
+				Element value = new Element("value");
 				value.addContent(field[i].get(obj).toString());
 				f.setContent(value);
 			}
 			else
 			{
 				Object reference = field[i].get(obj);
+				setMap(reference);
+				Element value = new Element("reference");
+				value.addContent(getMap(reference));
+				f.setContent(value);
+				
+				
 			}
 			e.addContent(f);
 		}
 		
-		root.addContent(e);
-		return document;
+		return e;
 	}
 }
