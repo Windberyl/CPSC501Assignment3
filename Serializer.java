@@ -5,20 +5,22 @@ import java.lang.reflect.*;
 import org.jdom.*;
 
 public class Serializer {
-	private IdentityHashMap<Object, String> map = new IdentityHashMap<Object, String>();
-	private Queue<Object> list = new LinkedList<Object>();
-	private Element root = new Element("serialized");
-	private Document document = new Document(root);
+	protected IdentityHashMap<Object, String> map = new IdentityHashMap<Object, String>();
+	protected Queue<Object> list = new LinkedList<Object>();
+	protected Element root = new Element("serialized");
+	protected Document document = new Document(root);
 	
-	private void setMap(Object obj)
+	protected int setMap(Object obj)
 	{
 		if(!map.containsKey(obj))
 		{
 			map.put(obj, Integer.toString(map.size()));
+			return 0;
 		}
+		else return -1;
 	}
 	
-	private String getMap(Object obj)
+	protected String getMap(Object obj)
 	{
 		if(!map.containsKey(obj))
 		{
@@ -27,53 +29,95 @@ public class Serializer {
 		return map.get(obj);
 	}
 	
-	public Document serialize(Object obj) throws IllegalArgumentException, IllegalAccessException
+	protected void setList(Object obj)
 	{
 		list.add(obj);
+	}
+	
+	protected Object getList()
+	{
+		return list.poll();
+	}
+	
+	public Document serialize(Object obj) throws IllegalArgumentException, IllegalAccessException
+	{
+		setList(obj);
+		if(setMap(obj) == -1) return document;
 		while(!list.isEmpty())
 		{
-			root.addContent(serializeObject(list.poll()));
+			root.addContent(serializeObject(getList()));
 		}
 		return document;
 	}
 	
-	private Element serializeObject(Object obj) throws IllegalArgumentException, IllegalAccessException
+	protected Element serializeObject(Object obj) throws IllegalArgumentException, IllegalAccessException
 	{
-		setMap(obj);
 		Class c = obj.getClass();
 		
 		Element e = new Element("object");
 		e.setAttribute(new Attribute("class", c.getName()));
 		e.setAttribute(new Attribute("id", getMap(obj)));
 		
-		Field[] field = c.getDeclaredFields();
-		for(int i = 0; i < field.length; i++)
+		if(c.isArray())
 		{
-			field[i].setAccessible(true);
-			
-			Element f = new Element("field");
-			f.setAttribute(new Attribute("name", field[i].getName()));
-			f.setAttribute(new Attribute("declaringclass", field[i].getType().getName()));
-			
-			if(field[i].getType().isPrimitive())
+			e.setAttribute(new Attribute("length", Integer.toString(Array.getLength(obj))));
+			for(int i = 1; i < Array.getLength(obj); i++)
 			{
-				Element value = new Element("value");
-				value.addContent(field[i].get(obj).toString());
-				f.setContent(value);
+				e.addContent(serializeArray(i, obj));
 			}
-			else
+		}
+		else
+		{
+			Field[] field = c.getDeclaredFields();
+			for(int i = 0; i < field.length; i++)
 			{
-				Object reference = field[i].get(obj);
-				setMap(reference);
-				Element value = new Element("reference");
-				value.addContent(getMap(reference));
-				f.setContent(value);
-				
-				
+				e.addContent(serializeField(field[i], obj));
 			}
-			e.addContent(f);
+		}
+		return e;
+	}
+	
+	protected Element serializeField(Field field, Object obj) throws IllegalArgumentException, IllegalAccessException
+	{
+		field.setAccessible(true);
+		
+		Element f = new Element("field");
+		f.setAttribute(new Attribute("name", field.getName()));
+		f.setAttribute(new Attribute("declaringclass", field.getType().getName()));
+		
+		if(field.getType().isPrimitive())
+		{
+			Element value = new Element("value");
+			value.addContent(field.get(obj).toString());
+			f.setContent(value);
+		}
+		else
+		{
+			Object reference = field.get(obj);
+			if(!(setMap(reference) == -1)) setList(reference);
+			Element value = new Element("reference");
+			value.addContent(getMap(reference));
+			f.setContent(value);
 		}
 		
-		return e;
+		return f;
+	}
+	
+	private Element serializeArray(int index, Object obj)
+	{
+		Object arrayValue = Array.get(obj, index);
+		if(arrayValue.getClass().isPrimitive() || arrayValue.getClass().getName().contains("java.lang"))
+		{
+			Element a = new Element("value");
+			a.addContent(arrayValue.toString());
+			return a;
+		}
+		else
+		{
+			Element a = new Element("reference");
+			if(!(setMap(arrayValue) == -1)) setList(arrayValue);
+			a.addContent(getMap(arrayValue));
+			return a;
+		}
 	}
 }
