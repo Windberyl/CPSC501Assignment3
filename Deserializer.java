@@ -2,11 +2,11 @@ import java.util.List;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
 
 import org.jdom.*;
 public class Deserializer {
-	protected IdentityHashMap<String, Object> map = new IdentityHashMap<String, Object>();
+	protected HashMap<String, Object> map = new HashMap<String, Object>();
 	protected void setMap(String key, Object obj)
 	{
 		map.put(key, obj);
@@ -28,7 +28,6 @@ public class Deserializer {
 		{
 			deserializeFields(children.get(i));
 		}
-		ClassC cc = (ClassC) getMap("0");
 		return getMap("0");
 	}
 	
@@ -84,7 +83,7 @@ public class Deserializer {
 				{
 					field.set(obj, Integer.parseInt(value.getValue()) + 1);
 				}
-				System.out.println(field.get(obj));
+				obj = getMap(e.getAttributeValue("id"));
 			}
 		}
 	}
