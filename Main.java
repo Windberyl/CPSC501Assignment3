@@ -17,7 +17,7 @@ public class Main {
 		Deserializer deserial = new Deserializer();
 		
 		XMLOutputter out = new XMLOutputter(Format.getPrettyFormat());
-		Document document = serial.serialize(classD);
+		Document document = serial.serialize(classA);
 		String string = out.outputString(document);
 		System.out.println(string);
 		

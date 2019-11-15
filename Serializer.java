@@ -61,7 +61,7 @@ public class Serializer {
 		if(c.isArray())
 		{
 			e.setAttribute(new Attribute("length", Integer.toString(Array.getLength(obj))));
-			for(int i = 1; i < Array.getLength(obj); i++)
+			for(int i = 0; i < Array.getLength(obj); i++)
 			{
 				e.addContent(serializeArray(i, obj));
 			}

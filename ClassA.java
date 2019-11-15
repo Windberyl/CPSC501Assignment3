@@ -5,6 +5,7 @@ public class ClassA {
 	private char doge = 'F';
 	private ClassB classB;
 	
+	public ClassA(){}
 	public ClassA(ClassB classB)
 	{
 		this.classB = classB;

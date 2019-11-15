@@ -58,32 +58,52 @@ public class Deserializer {
 		Class c = Class.forName(e.getAttributeValue("class"));
 		
 		List<Element> list = e.getChildren();
-		
-		for(int i = 0; i < list.size(); i++)
+		if(c.isArray())
 		{
-			Element element = list.get(i);
-			String type = element.getAttributeValue("declaringclass");
-			try
+			Object array = map.get(e.getAttributeValue("id"));
+			for(int i = 0; i < list.size(); i++)
 			{
-				Class declare = Class.forName(type);
-				Content value = element.getChild("reference").getContent(0);
-				Field field = c.getDeclaredField(element.getAttributeValue("name"));
-				field.setAccessible(true);
-				Object obj = getMap(value.getValue());
-				field.set(getMap(e.getAttributeValue("id")), obj);
-			}
-			catch(ClassNotFoundException exception)
-			{
-				Content value = element.getChild("value").getContent(0);
-				Field field = c.getDeclaredField(element.getAttributeValue("name"));
-				field.setAccessible(true);
-				
-				Object obj = getMap(e.getAttributeValue("id"));
-				if(field.getType() == int.class)
+				Element element = list.get(i);
+				if(element.getName().equals("reference"))
 				{
-					field.set(obj, Integer.parseInt(value.getValue()) + 1);
+					Object value = getMap(element.getContent(0).getValue());
+					Array.set(array, i, value);
 				}
-				obj = getMap(e.getAttributeValue("id"));
+				else
+				{
+					Object value = Integer.parseInt(element.getContent(0).getValue());
+					Array.set(array, i, value);
+				}
+			}
+		}
+		else
+		{
+			for(int i = 0; i < list.size(); i++)
+			{
+				Element element = list.get(i);
+				String type = element.getAttributeValue("declaringclass");
+				try
+				{
+					Class declare = Class.forName(type);
+					Content value = element.getChild("reference").getContent(0);
+					Field field = c.getDeclaredField(element.getAttributeValue("name"));
+					field.setAccessible(true);
+					Object obj = getMap(value.getValue());
+					field.set(getMap(e.getAttributeValue("id")), obj);
+				}
+				catch(ClassNotFoundException exception)
+				{
+					Content value = element.getChild("value").getContent(0);
+					Field field = c.getDeclaredField(element.getAttributeValue("name"));
+					field.setAccessible(true);
+					
+					Object obj = getMap(e.getAttributeValue("id"));
+					if(field.getType() == int.class)
+					{
+						field.set(obj, Integer.parseInt(value.getValue()) + 1);
+					}
+					obj = getMap(e.getAttributeValue("id"));
+				}
 			}
 		}
 	}
