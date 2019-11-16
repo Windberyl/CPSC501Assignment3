@@ -1,5 +1,5 @@
 public class ClassD {
-	ClassC[] classC = new ClassC[10];
+	public ClassC[] classC = new ClassC[10];
 	
 	public ClassD()
 	{

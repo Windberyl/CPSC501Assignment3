@@ -1,6 +1,6 @@
 
 public class ClassB {
-	private ClassA classA;
+	public ClassA classA;
 	private int wow = 4;
 	
 	void setClassA(ClassA classA)
