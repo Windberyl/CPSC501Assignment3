@@ -100,7 +100,7 @@ public class Deserializer {
 					Object obj = getMap(e.getAttributeValue("id"));
 					if(field.getType() == int.class)
 					{
-						field.set(obj, Integer.parseInt(value.getValue()) + 1);
+						field.set(obj, Integer.parseInt(value.getValue()));
 					}
 					obj = getMap(e.getAttributeValue("id"));
 				}
